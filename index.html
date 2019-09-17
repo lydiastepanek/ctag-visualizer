@@ -1,23 +1,56 @@
 <html>
     <head>
         <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
-        <script>
-          const client = stitch.Stitch.initializeDefaultAppClient('ctagsvis-bymac');
-        
-          const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('ctags');
-        
-          client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user =>
-            db.collection('atlasproxy').find({}, { limit: 100}).asArray()
-          ).then(docs => {
-              debugger;
-              console.log("Found docs", docs)
-              console.log("[MongoDB Stitch] Connected to Stitch")
-          }).catch(err => {
-            console.error(err)
-          });
-        </script>
+        <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
     </head>
     <body>
+        <div class="status">
+            Loading Data...
+        </div>
+        <div class="stats-container" style="display: none;">
+            Stats
+        </div>
+        <div class="packages-container" style="display: none;">
+            <span>Packages</span>
+            <ul class="packages">
+            </ul>
+        </div>
+        <script>
 
+            const addPackage = function(pkg) {
+                $(".packages").append("<li>" + pkg + "<ul class='inner-package inner-package-" + pkg + "'></ul></li>");
+            }
+
+            const addType = function(pkg, tipe) {
+                $(".inner-package-" + pkg).append("<li>" + tipe + "</li>")
+            }
+            // https://github.com/10gen/atlasproxy/blob/ee48fe5d83c4d5d85c701665597a47969cc0dc92/backup_config.go#L6
+            // /Users/tomeryakir/atlasproxy/src/github.com/10gen/atlasproxy/session.go
+            const client = stitch.Stitch.initializeDefaultAppClient('ctagsvis-bymac');
+          
+            const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('ctags');
+          
+            client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user =>
+              db.collection('atlasproxy').find({}).asArray()
+            ).then(docs => {
+                console.log("Found docs", docs)
+                console.log("[MongoDB Stitch] Connected to Stitch")
+                docs = docs.filter(item => item.package != "");
+                const packages = [...new Set(docs.map(item => item.package))];
+                packages.sort();
+                packages.forEach(pkg => { 
+                    addPackage(pkg) 
+                    docs.filter(item => item.package === pkg && item.kind === "struct").forEach(item => addType(pkg, item.name));
+                });
+                $(".status").hide();
+                $(".stats-container").show();
+                $(".packages-container").show();
+            }).catch(err => {
+              console.error(err)
+            });
+          </script>
     </body>
 </html>
