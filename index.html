@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
+        <script>
+          const client = stitch.Stitch.initializeDefaultAppClient('ctagsvis-bymac');
+        
+          const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('ctags');
+        
+          client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user =>
+            db.collection('atlasproxy').find({}, { limit: 100}).asArray()
+          ).then(docs => {
+              debugger;
+              console.log("Found docs", docs)
+              console.log("[MongoDB Stitch] Connected to Stitch")
+          }).catch(err => {
+            console.error(err)
+          });
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>
